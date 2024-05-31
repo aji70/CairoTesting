@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"26i7o19lhk1ui","package_name":"ownable","contract_name":"OwnableContract","module_path":"ownable::OwnableContract","artifacts":{"sierra":"ownable_OwnableContract.contract_class.json","casm":null}}]}
