@@ -1,6 +1,10 @@
-use snforge_std::{declare, ContractClassTrait, cheat_caller_address, CheatSpan};
+use snforge_std::{
+    declare, ContractClassTrait, cheat_caller_address, CheatSpan, spy_events, SpyOn, EventSpy,
+    EventAssertions
+};
 use ownable::IOwnableTraitDispatcher;
 use ownable::IOwnableTraitDispatcherTrait;
+use ownable::OwnableContract;
 use starknet::ContractAddress;
 use core::traits::TryInto;
 
@@ -73,4 +77,32 @@ fn test_transfer_owner_Fail () {
     dispatcher.transfer_ownership(new_admin_address);
     let new_owner = dispatcher.owner();
     assert(new_owner == fak_admin_address, 'new owner set failed');
+}
+
+#[test]
+fn test_event_emission() {
+    let admin_address: ContractAddress = 'admin'.try_into().unwrap();
+    let next_admin_address: ContractAddress = 'next_admin'.try_into().unwrap();
+
+    let contract_address = deploy_contract("OwnableContract");
+    let dispatcher = IOwnableTraitDispatcher { contract_address };
+
+    let mut spy = spy_events(SpyOn::One(contract_address));
+
+    cheat_caller_address(contract_address, admin_address, CheatSpan::Indefinite);
+    dispatcher.transfer_ownership(next_admin_address);
+
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    contract_address,
+                    OwnableContract::Event::OwnershipTransfer(
+                        OwnableContract::OwnershipTransfer {
+                            prev_owner: admin_address, new_owner: next_admin_address,
+                        }
+                    )
+                )
+            ]
+        );
 }
